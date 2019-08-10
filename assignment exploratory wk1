@@ -1,0 +1,68 @@
+rm(list=ls(all=T))
+library(dplyr)
+library(data.table)
+
+
+temp <- tempfile()
+download.file("https://d396qusza40orc.cloudfront.net/exdata%2Fdata%2Fhousehold_power_consumption.zip", temp, method="curl")
+con <- unz(temp, "household_power_consumption.txt")
+data <- read.table(con, sep=";", header = TRUE)
+unlink(temp)
+
+# (for me: Faster than downloading every time)
+#data<-fread('/home/kevin/Coursea_data_files/household_power_consumption.txt')
+data$Date<-as.factor(data$Date)
+
+
+
+
+date<-strptime(data$Date,'%d/%m/%Y')
+data<-data.frame(date,data[,-1])
+data<-subset(data,date=='2007-02-01'|date=='2007-02-02')
+data[,3:9]<-apply(data[,3:9],2,as.numeric)
+data$fulltime <- as.POSIXct(paste(data$date, data$Time), format="%Y-%m-%d %H:%M:%S")
+
+#head(data)
+#=============
+
+#plot 1
+png("plot1.png",width=480,height=480)
+hist(data$Global_active_power,col='red',xlab='Global Active Power (kilowatts)',main='Global Active Power')
+dev.off()
+
+#plot 2
+png("plot2.png",width=480,height=480)
+plot(data$fulltime, data$Global_active_power, type = "l", ylab='Global Active Power (kilowatts)',xlab='')
+dev.off()
+
+#plot 3
+png("plot3.png",width=480,height=480)
+plot(data$fulltime, data[,7],type='l',col='black',xlab='',ylab='Energy sub metering')
+	lines(data$fulltime, data[,8],type='l',col='red')
+	lines(data$fulltime, data[,9],type='l',,col='blue')
+legend(legend=colnames(data[,7:9]),x='topright',,lty='solid',col=c('Black','Red','Blue'))
+dev.off()
+
+#plot 4
+#plot 4.1
+png("plot4.png",width=480,height=480)
+par(mfrow=c(2,2)) #multiple graphs
+
+plot(data$fulltime, data$Global_active_power, type = "l", ylab='Global Active Power',xlab='')
+
+#plot 4.2
+plot(data$fulltime, data$Voltage, type = "l", ylab='Voltage',xlab='datetime')
+
+#plot 4.3
+plot(data$fulltime, data[,7],type='l',col='black',xlab='',ylab='Energy sub metering')
+	lines(data$fulltime, data[,8],type='l',col='red')
+	lines(data$fulltime, data[,9],type='l',,col='blue')
+legend(legend=colnames(data[,7:9]),x='topright',,lty='solid',col=c('Black','Red','Blue'))
+
+#plot 4.4
+plot(data$fulltime, data$Global_reactive_power, type = "l", ylab='Global_reactive_power',xlab='datetime')
+
+
+dev.off()
+
+
